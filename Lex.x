@@ -6,6 +6,10 @@
 {
 module Lex(lexToken) where
 
+import Data.Word
+import Data.ByteString as BS (ByteString, uncons, length, null)
+import Data.ByteString.Char8 (pack)
+
 import Token
 }
 
@@ -37,22 +41,22 @@ fixupDouble s
   | last s == '.' = s ++ "0"
   | otherwise = s
 
-type AlexInput = String
+type AlexInput = ByteString
 
-alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
-alexGetChar "" = Nothing
-alexGetChar (c : cs) = Just (c, cs)
+alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
+alexGetByte bs = uncons bs
 
 alexInputPrevChar :: AlexInput -> char
 alexInputPrevChar _ = undefined
 
 lexToken :: String -> Token
 lexToken s =
-  case alexScan s 0 of
+  let bs = pack s in
+  case alexScan bs 0 of
     AlexEOF -> error "empty value"
     AlexError _ -> error $ "could not parse " ++ s
     AlexSkip _ _ -> error "internal error: unexpected skip"
-    AlexToken "" n act | n == length s -> act s
+    AlexToken bs' n act | BS.null bs' && n == BS.length bs -> act s
     AlexToken _ _ _ -> error $ "garbaged value " ++ s
 
 }
