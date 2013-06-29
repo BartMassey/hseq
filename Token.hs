@@ -5,13 +5,16 @@
 
 module Token (Token(..), Incrementable(..), comparable) where
 
+import Roman
+
 import Data.Char
 
 data Token =
   TokenDouble Double |
   TokenInt Int |
   TokenLower Char |
-  TokenUpper Char
+  TokenUpper Char |
+  TokenRoman Int
   deriving (Eq, Ord)
 
 instance Show Token where
@@ -19,6 +22,7 @@ instance Show Token where
   show (TokenInt t) = show t
   show (TokenLower t) = [t]
   show (TokenUpper t) = [t]
+  show (TokenRoman t) = show (Roman t)
 
 class Incrementable a where
   increase :: a -> a
@@ -28,10 +32,12 @@ instance Incrementable Token where
   increase (TokenInt i) = TokenInt (i + 1)
   increase (TokenLower c) = TokenLower (chr (ord c + 1))
   increase (TokenUpper c) = TokenUpper (chr (ord c + 1))
+  increase (TokenRoman i) = TokenRoman (i + 1)
 
 comparable :: Token -> Token -> Bool
 comparable (TokenDouble _) (TokenDouble _) = True
 comparable (TokenInt _) (TokenInt _) = True
 comparable (TokenLower _) (TokenLower _) = True
 comparable (TokenUpper _) (TokenUpper _) = True
+comparable (TokenRoman _) (TokenRoman _) = True
 comparable _ _ = False
