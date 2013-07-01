@@ -13,14 +13,14 @@ data Token =
   TokenDouble Double |
   TokenInt Int |
   TokenLetter Char |
-  TokenRoman String
+  TokenRoman Int
   deriving (Eq, Ord)
 
 instance Show Token where
   show (TokenDouble t) = show t
   show (TokenInt t) = show t
   show (TokenLetter t) = [t]
-  show (TokenRoman t) = t
+  show (TokenRoman t) = show (Roman t)
 
 class Incrementable a where
   increase :: a -> a
@@ -29,7 +29,7 @@ instance Incrementable Token where
   increase (TokenDouble d) = TokenDouble (d + 1.0)  
   increase (TokenInt i) = TokenInt (i + 1)
   increase (TokenLetter c) = TokenLetter (chr (ord c + 1))
-  increase r@(TokenRoman _) = show (read r + 1)
+  increase (TokenRoman i) = TokenRoman (i + 1)
 
 comparable :: Token -> Token -> Bool
 comparable (TokenDouble _) (TokenDouble _) = True

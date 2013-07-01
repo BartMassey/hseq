@@ -22,8 +22,7 @@ $upper = A-Z
 tokens :-
   @double { \s -> TokenDouble $ negateableRead $ fixupDouble s }
   @int { \s -> TokenInt $ negateableRead s }
-  $lower { \[s] -> TokenLower s }
-  $upper { \[s] -> TokenUpper s }
+  $lower { \[s] -> TokenLetter s }
 
 {
 
