@@ -5,9 +5,9 @@
 
 module Token (Token(..), Incrementable(..), comparable) where
 
-import Data.Char
+import Roman (Roman(..))
 
-import Roman
+import Data.Char (chr, ord)
 
 data Token =
   TokenDouble Double |
