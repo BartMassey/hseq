@@ -3,7 +3,7 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-module Token (Token(..), Format(..), Incrementable(..), comparable) where
+module Token (Token(..), Format(..), Incrementable(..), promote) where
 
 import Roman (Roman(..))
 
@@ -38,11 +38,11 @@ instance Incrementable Token where
   increase (TokenLetter c) = TokenLetter (chr (ord c + 1))
   increase (TokenRoman i) = TokenRoman (i + 1)
 
-comparable :: Token -> Token -> Bool
-comparable (TokenDouble _) (TokenDouble _) = True
-comparable (TokenInt _) (TokenInt _) = True
-comparable (TokenDouble _) (TokenInt _) = True
-comparable (TokenInt _) (TokenDouble _) = True
-comparable (TokenLetter _) (TokenLetter _) = True
-comparable (TokenRoman _) (TokenRoman _) = True
-comparable _ _ = False
+promote :: (Token, Token) -> (Token, Token)
+promote (t1@(TokenDouble _), t2@(TokenDouble _)) = (t1, t2)
+promote (t1@(TokenInt _), t2@(TokenInt _)) = (t1, t2)
+promote (t1@(TokenDouble _), TokenInt i2) = (t1, TokenDouble $ fromIntegral i2)
+promote (TokenInt i1, t2@(TokenDouble _)) = (TokenDouble $ fromIntegral i1, t2)
+promote (t1@(TokenLetter _), t2@(TokenLetter _)) = (t1, t2)
+promote (t1@(TokenRoman _), t2@(TokenRoman _)) = (t1, t2)
+promote _ = error "start and end must be of compatible type"

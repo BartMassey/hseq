@@ -48,6 +48,6 @@ main = do
 	  Nothing -> FormatDefault
   let start = lexToken format $ getRequiredArg argv ArgStart
   let end = lexToken format $ getRequiredArg argv ArgEnd
-  unless (comparable start end) (error "start and end must be same type")
-  putStr $ unlines $ map show $ takeWhile (<= end) $ iterate increase start
+  let (start', end') = promote (start, end)
+  putStr $ unlines $ map show $ takeWhile (<= end') $ iterate increase start'
   return ()
