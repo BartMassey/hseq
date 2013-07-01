@@ -3,7 +3,7 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-module Token (Token(..), Incrementable(..), comparable) where
+module Token (Token(..), Format(..), Incrementable(..), comparable) where
 
 import Roman (Roman(..))
 
@@ -15,6 +15,13 @@ data Token =
   TokenLetter Char |
   TokenRoman Int
   deriving (Eq, Ord)
+
+data Format =
+  FormatDefault |
+  FormatRoman |
+  FormatAlpha |
+  FormatArabic |
+  FormatDouble
 
 instance Show Token where
   show (TokenDouble t) = show t

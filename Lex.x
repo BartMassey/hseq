@@ -11,6 +11,7 @@ import Data.ByteString as BS (ByteString, uncons, length, null)
 import Data.ByteString.Char8 (pack)
 
 import Token
+import Roman
 }
 
 $digit = 0-9
@@ -20,11 +21,27 @@ $upper = A-Z
 @double = \-?(\.$digit+|$digit+\.$digit*)(e\-?$digit+)?
 
 tokens :-
-  @double { \s -> TokenDouble $ negateableRead $ fixupDouble s }
-  @int { \s -> TokenInt $ negateableRead s }
-  $lower { \[s] -> TokenLetter s }
+  @double { lexDouble  }
+  @int { lexInt  }
+  $lower { lexChar }
 
 {
+
+lexDouble :: (Format, String) -> Token
+lexDouble (FormatDefault, s) = lexDouble (FormatDouble, s)
+lexDouble (FormatDouble, s) = TokenDouble $ negateableRead $ fixupDouble s
+lexDouble (_, s) = error $ "bad format for " ++ s
+
+lexInt :: (Format, String) -> Token
+lexInt (FormatDefault, s) = lexInt (FormatArabic, s)
+lexInt (FormatArabic, s) = TokenInt $ negateableRead s
+lexInt (_, s) = error $ "bad format for " ++ s
+
+lexChar :: (Format, String) -> Token
+lexChar (FormatDefault, s) = lexChar (FormatAlpha, s)
+lexChar (FormatAlpha, [c]) = TokenLetter c
+lexChar (FormatRoman, s) = TokenRoman $ fromRoman s
+lexChar (_, s) = error $ "malformed character format for " ++ s
 
 negateableRead :: (Num a, Read a) => String -> a
 negateableRead ('-' : s) = negate $ read s
@@ -40,22 +57,25 @@ fixupDouble s
   | last s == '.' = s ++ "0"
   | otherwise = s
 
-type AlexInput = ByteString
+type AlexInput = (Format, ByteString)
 
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte bs = uncons bs
+alexGetByte (f, bs) =
+  fmap formatify $ uncons bs
+  where
+    formatify (c, bs') = (c, (f, bs'))
 
 alexInputPrevChar :: AlexInput -> char
 alexInputPrevChar _ = undefined
 
-lexToken :: String -> Token
-lexToken s =
+lexToken :: Format -> String -> Token
+lexToken f s =
   let bs = pack s in
-  case alexScan bs 0 of
+  case alexScan (f, bs) 0 of
     AlexEOF -> error "empty value"
     AlexError _ -> error $ "could not parse " ++ s
     AlexSkip _ _ -> error "internal error: unexpected skip"
-    AlexToken bs' n act | BS.null bs' && n == BS.length bs -> act s
+    AlexToken (f, bs') n act | BS.null bs' && n == BS.length bs -> act (f, s)
     AlexToken _ _ _ -> error $ "garbaged value " ++ s
 
 }

@@ -4,6 +4,7 @@
 -- distribution of this software for license terms.
 
 import Control.Monad
+import Data.Char (toLower)
 import System.Console.ParseArgs
 
 import Token
@@ -37,8 +38,16 @@ argd = [
 main :: IO ()
 main = do
   argv <- parseArgsIO ArgsComplete argd
-  let start = lexToken $ getRequiredArg argv ArgStart
-  let end = lexToken $ getRequiredArg argv ArgEnd
+  let format =
+        case fmap (map toLower) $ getArg argv ArgFormat of
+	  Just "roman" -> FormatRoman
+	  Just "alpha" -> FormatAlpha
+	  Just "arabic" -> FormatArabic
+	  Just "double" -> FormatDouble
+	  Just s -> error $ "unknown sequence format " ++ s
+	  Nothing -> FormatDefault
+  let start = lexToken format $ getRequiredArg argv ArgStart
+  let end = lexToken format $ getRequiredArg argv ArgEnd
   unless (comparable start end) (error "start and end must be same type")
   putStr $ unlines $ map show $ takeWhile (<= end) $ iterate increase start
   return ()
