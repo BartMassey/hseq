@@ -9,24 +9,30 @@ import System.Console.ParseArgs
 import Token
 import Lex
 
-data ArgIndex = ArgStart | ArgEnd deriving (Ord, Eq, Show, Enum)
+data ArgIndex =
+  ArgFormat | ArgStart | ArgEnd
+  deriving (Ord, Eq, Show, Enum)
 
 argd :: [Arg ArgIndex]
 argd = [
+  Arg {
+     argIndex = ArgFormat,
+     argAbbr = Just 'f',
+     argName = Just "format",
+     argData = argDataOptional "format" ArgtypeString,
+     argDesc = "sequence element format" },
   Arg {
      argIndex = ArgStart,
      argAbbr = Nothing,
      argName = Nothing,
      argData = argDataRequired "start" ArgtypeString,
-     argDesc = "first element of sequence"
-  },
+     argDesc = "first element of sequence" },
   Arg {
      argIndex = ArgEnd,
      argAbbr = Nothing,
      argName = Nothing,
      argData = argDataRequired "end" ArgtypeString,
-     argDesc = "last element of sequence"
-  } ]
+     argDesc = "last element of sequence" } ]
 
 main :: IO ()
 main = do
