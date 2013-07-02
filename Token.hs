@@ -3,7 +3,8 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-module Token (Token(..), Format(..), Incrementable(..), promote) where
+module Token (Token(..), Format(..), Incrementable(..), promote, promote3)
+where
 
 import Roman (Roman(..))
 
@@ -38,11 +39,29 @@ instance Incrementable Token where
   increase (TokenLetter c) = TokenLetter (chr (ord c + 1))
   increase (TokenRoman i) = TokenRoman (i + 1)
 
+promoteL :: [Token] -> [Token]
+promoteL ts
+  | all (\x -> case x of TokenLetter _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenRoman _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenInt _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenDouble _ -> True; _ -> False) ts = ts
+  | otherwise =
+      case promote1 ts of
+        Just ts' -> ts'
+	Nothing -> error "terms must be of compatible type"
+  where
+    promote1 [] =
+      Just []
+    promote1 (TokenInt t : ps) =
+      fmap (TokenDouble (fromIntegral t) :) (promote1 ps)
+    promote1 (TokenDouble t : ps) =
+      fmap (TokenDouble t :) (promote1 ps)
+    promote1 _ = Nothing
+
 promote :: (Token, Token) -> (Token, Token)
-promote (t1@(TokenDouble _), t2@(TokenDouble _)) = (t1, t2)
-promote (t1@(TokenInt _), t2@(TokenInt _)) = (t1, t2)
-promote (t1@(TokenDouble _), TokenInt i2) = (t1, TokenDouble $ fromIntegral i2)
-promote (TokenInt i1, t2@(TokenDouble _)) = (TokenDouble $ fromIntegral i1, t2)
-promote (t1@(TokenLetter _), t2@(TokenLetter _)) = (t1, t2)
-promote (t1@(TokenRoman _), t2@(TokenRoman _)) = (t1, t2)
-promote _ = error "start and end must be of compatible type"
+promote (t1, t2) =
+  let [t1', t2'] = promoteL [t1, t2] in (t1', t2')
+
+promote3 :: (Token, Token, Token) -> (Token, Token, Token)
+promote3 (t1, t2, t3) =
+  let [t1', t2', t3'] = promoteL [t1, t2, t3] in (t1', t2', t3')

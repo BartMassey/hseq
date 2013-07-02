@@ -3,7 +3,6 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-import Control.Monad
 import Data.Char (toLower)
 import System.Console.ParseArgs
 
