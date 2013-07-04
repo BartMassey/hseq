@@ -47,6 +47,7 @@ fromRoman ('x' : 'c' : ds) = 90 + fromRoman ds
 fromRoman ('x' : ds) = 10 + fromRoman ds
 fromRoman "iv" = 4
 fromRoman "ix" = 9
+fromRoman ('v' : ds) = 5 + fromRoman ds
 fromRoman ('i' : ds) = 1 + fromRoman ds
 fromRoman "" = 0
 fromRoman (d : _) = error $ "illegal digit " ++ [d] ++ " in roman numeral"
