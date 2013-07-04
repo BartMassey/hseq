@@ -27,7 +27,7 @@ $upper = A-Z
 tokens :-
   @double { lexDouble  }
   @int { lexInt  }
-  $lower { lexChar }
+  $lower+ { lexAlpha }
 
 {
 
@@ -41,11 +41,11 @@ lexInt (FormatDefault, s) = lexInt (FormatArabic, s)
 lexInt (FormatArabic, s) = TokenInt $ negateableRead s
 lexInt (_, s) = error $ "bad format for " ++ s
 
-lexChar :: (Format, String) -> Token
-lexChar (FormatDefault, s) = lexChar (FormatAlpha, s)
-lexChar (FormatAlpha, [c]) = TokenAlpha c
-lexChar (FormatRoman, s) = TokenRoman $ fromRoman s
-lexChar (_, s) = error $ "malformed character format for " ++ s
+lexAlpha :: (Format, String) -> Token
+lexAlpha (FormatDefault, s) = lexAlpha (FormatAlpha, s)
+lexAlpha (FormatAlpha, [c]) = TokenAlpha c
+lexAlpha (FormatRoman, s) = TokenRoman $ fromRoman s
+lexAlpha (_, s) = error $ "malformed character format for " ++ s
 
 negateableRead :: (Num a, Read a) => String -> a
 negateableRead ('-' : s) = negate $ read s
