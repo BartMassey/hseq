@@ -13,7 +13,7 @@ import Data.Char (chr, ord)
 data Token =
   TokenDouble Double |
   TokenInt Int |
-  TokenLetter Char |
+  TokenAlpha Char |
   TokenRoman Int
   deriving (Eq, Ord)
 
@@ -27,7 +27,7 @@ data Format =
 instance Show Token where
   show (TokenDouble t) = show t
   show (TokenInt t) = show t
-  show (TokenLetter t) = [t]
+  show (TokenAlpha t) = [t]
   show (TokenRoman t) = show (Roman t)
 
 class Incrementable a where
@@ -36,12 +36,12 @@ class Incrementable a where
 instance Incrementable Token where
   increase (TokenDouble d) = TokenDouble (d + 1.0)  
   increase (TokenInt i) = TokenInt (i + 1)
-  increase (TokenLetter c) = TokenLetter (chr (ord c + 1))
+  increase (TokenAlpha c) = TokenAlpha (chr (ord c + 1))
   increase (TokenRoman i) = TokenRoman (i + 1)
 
 promoteL :: [Token] -> [Token]
 promoteL ts
-  | all (\x -> case x of TokenLetter _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenAlpha _ -> True; _ -> False) ts = ts
   | all (\x -> case x of TokenRoman _ -> True; _ -> False) ts = ts
   | all (\x -> case x of TokenInt _ -> True; _ -> False) ts = ts
   | all (\x -> case x of TokenDouble _ -> True; _ -> False) ts = ts

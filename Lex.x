@@ -39,7 +39,7 @@ lexInt (_, s) = error $ "bad format for " ++ s
 
 lexChar :: (Format, String) -> Token
 lexChar (FormatDefault, s) = lexChar (FormatAlpha, s)
-lexChar (FormatAlpha, [c]) = TokenLetter c
+lexChar (FormatAlpha, [c]) = TokenAlpha c
 lexChar (FormatRoman, s) = TokenRoman $ fromRoman s
 lexChar (_, s) = error $ "malformed character format for " ++ s
 
