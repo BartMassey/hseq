@@ -4,6 +4,10 @@
 --- distribution of this software for license terms.
 
 {
+-- Suppress warnings from alex-generated code.
+-- Thanks https://github.com/jgm/illuminate for the tip.
+{-# OPTIONS -w #-}  
+
 module Lex(lexToken) where
 
 import Data.Word
