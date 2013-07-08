@@ -21,13 +21,14 @@ import Roman
 $digit = 0-9
 $lower = a-z
 $upper = A-Z
+@word = ($lower|$upper)+
 @int = \-?$digit+
 @double = \-?(\.$digit+|$digit+\.$digit*)(e\-?$digit+)?
 
 tokens :-
   @double { lexDouble  }
   @int { lexInt  }
-  $lower+ { lexAlpha }
+  @word { lexAlpha }
 
 {
 
