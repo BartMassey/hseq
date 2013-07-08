@@ -15,7 +15,7 @@ data Case = CaseUpper | CaseLower deriving (Eq, Ord)
 
 data Token =
   TokenDouble Double |
-  TokenInt Int |
+  TokenInt Integer |
   TokenAlpha Case Char |
   TokenRoman Case Int
   deriving (Eq, Ord)

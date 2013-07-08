@@ -15,8 +15,6 @@ Things to add:
   * Field width control with space-padding and zero-padding
     (at least)
   * Alternate bases for integers
-  * Move from `Int` to `Integer` internally for
-    arbitrary-precision
   * Proper defaulting of roman numeral arguments
   * 1, 2 and 3-argument sequences, with zero-based and one-based
     1-argument versions
