@@ -12,7 +12,7 @@ instance Show Roman where
   show (Roman n) = toRoman n
 
 instance Read Roman where
-  readsPrec _ = (\s -> [(Roman (fromRoman s), "")])
+  readsPrec _ s = [(Roman (fromRoman s), "")]
 
 toRoman :: Int -> String
 toRoman n
