@@ -10,6 +10,7 @@
 
 module Lex(lexToken) where
 
+import Data.Char (toUpper)
 import Data.Word
 import Data.ByteString as BS (ByteString, uncons, length, null)
 import Data.ByteString.Char8 (pack)
@@ -21,14 +22,14 @@ import Roman
 $digit = 0-9
 $lower = a-z
 $upper = A-Z
-@word = ($lower|$upper)+
 @int = \-?$digit+
 @double = \-?(\.$digit+|$digit+\.$digit*)(e\-?$digit+)?
 
 tokens :-
   @double { lexDouble  }
   @int { lexInt  }
-  @word { lexAlpha }
+  $upper+ { lexAlphaUpper }
+  $lower+ { lexAlphaLower }
 
 {
 
@@ -42,11 +43,18 @@ lexInt (FormatDefault, s) = lexInt (FormatArabic, s)
 lexInt (FormatArabic, s) = TokenInt $ negateableRead s
 lexInt (_, s) = error $ "bad format for " ++ s
 
-lexAlpha :: (Format, String) -> Token
-lexAlpha (FormatDefault, s) = lexAlpha (FormatAlpha, s)
-lexAlpha (FormatAlpha, [c]) = TokenAlpha c
-lexAlpha (FormatRoman, s) = TokenRoman $ fromRoman s
-lexAlpha (_, s) = error $ "malformed character format for " ++ s
+lexAlphaUpper :: (Format, String) -> Token
+lexAlphaUpper (FormatDefault, s) = lexAlphaUpper (FormatAlpha, s)
+lexAlphaUpper (FormatAlpha, [c]) = TokenAlpha CaseUpper c
+lexAlphaUpper (FormatRoman, s) = TokenRoman CaseUpper $ fromRoman s
+lexAlphaUpper (_, s) = error $ "malformed character format for " ++ s
+
+lexAlphaLower :: (Format, String) -> Token
+lexAlphaLower (FormatDefault, s) = lexAlphaLower (FormatAlpha, s)
+lexAlphaLower (FormatAlpha, [c]) = TokenAlpha CaseLower c
+lexAlphaLower (FormatRoman, s) = TokenRoman CaseLower $
+                                   fromRoman (map toUpper s)
+lexAlphaLower (_, s) = error $ "malformed character format for " ++ s
 
 negateableRead :: (Num a, Read a) => String -> a
 negateableRead ('-' : s) = negate $ read s

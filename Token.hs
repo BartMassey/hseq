@@ -3,18 +3,21 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-module Token (Token(..), Format(..), Incrementable(..), promote, promote3)
+module Token (Case(..), Token(..), Format(..), Incrementable(..), 
+              promote, promote3)
 where
 
 import Roman (Roman(..))
 
-import Data.Char (chr, ord)
+import Data.Char (chr, ord, toUpper, toLower)
+
+data Case = CaseUpper | CaseLower deriving (Eq, Ord)
 
 data Token =
   TokenDouble Double |
   TokenInt Int |
-  TokenAlpha Char |
-  TokenRoman Int
+  TokenAlpha Case Char |
+  TokenRoman Case Int
   deriving (Eq, Ord)
 
 data Format =
@@ -27,8 +30,10 @@ data Format =
 instance Show Token where
   show (TokenDouble t) = show t
   show (TokenInt t) = show t
-  show (TokenAlpha t) = [t]
-  show (TokenRoman t) = show (Roman t)
+  show (TokenAlpha CaseUpper t) = [toUpper t]
+  show (TokenAlpha CaseLower t) = [toLower t]
+  show (TokenRoman CaseUpper t) = show (Roman t)
+  show (TokenRoman CaseLower t) = map toLower $ show (Roman t)
 
 class Incrementable a where
   increase :: a -> a
@@ -36,13 +41,15 @@ class Incrementable a where
 instance Incrementable Token where
   increase (TokenDouble d) = TokenDouble (d + 1.0)  
   increase (TokenInt i) = TokenInt (i + 1)
-  increase (TokenAlpha c) = TokenAlpha (chr (ord c + 1))
-  increase (TokenRoman i) = TokenRoman (i + 1)
+  increase (TokenAlpha xc c) = TokenAlpha xc (chr (ord c + 1))
+  increase (TokenRoman xc i) = TokenRoman xc (i + 1)
 
 promoteL :: [Token] -> [Token]
 promoteL ts
-  | all (\x -> case x of TokenAlpha _ -> True; _ -> False) ts = ts
-  | all (\x -> case x of TokenRoman _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenAlpha CaseUpper _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenAlpha CaseLower _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenRoman CaseUpper _ -> True; _ -> False) ts = ts
+  | all (\x -> case x of TokenRoman CaseLower _ -> True; _ -> False) ts = ts
   | all (\x -> case x of TokenInt _ -> True; _ -> False) ts = ts
   | all (\x -> case x of TokenDouble _ -> True; _ -> False) ts = ts
   | otherwise =
