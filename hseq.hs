@@ -38,7 +38,7 @@ argd = [
      argIndex = ArgStart,
      argAbbr = Nothing,
      argName = Nothing,
-     argData = argDataRequired "start" ArgtypeString,
+     argData = argDataOptional "start" ArgtypeString,
      argDesc = "first element of sequence" },
   Arg {
      argIndex = ArgEnd,
@@ -70,8 +70,17 @@ main = do
 	  Just "double" -> FormatDouble
 	  Just s -> error $ "unknown sequence format " ++ s
 	  Nothing -> FormatDefault
-  let start = lexToken format $ getRequiredArg argv ArgStart
   let end = lexToken format $ getRequiredArg argv ArgEnd
+  let start = 
+        case getArg argv ArgStart of 
+          Just s -> 
+            lexToken format s
+          Nothing ->
+            case end of
+              TokenDouble _ -> TokenDouble 0
+              TokenInt _ -> TokenInt 0
+              TokenAlpha xc _ -> TokenAlpha xc 'a'
+              TokenRoman xc _ -> TokenRoman xc 1
   let (start', end') = promote (start, end)
   outformat $ map show $ takeWhile (<= end') $ iterate increase start'
   return ()
