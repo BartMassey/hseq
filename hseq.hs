@@ -53,7 +53,7 @@ main :: IO ()
 main = do
   argv <- parseArgsIO ArgsComplete argd
   when (gotArg argv ArgWords && gotArg argv ArgLines)
-    (error "specified both words and lines as output style")
+    (usageError argv "specified both words and lines as output style")
   let outstyle
         | gotArg argv ArgWords = OutStyleWords
         | gotArg argv ArgLines = OutStyleLines
@@ -68,19 +68,18 @@ main = do
 	  Just "alpha" -> FormatAlpha
 	  Just "arabic" -> FormatArabic
 	  Just "double" -> FormatDouble
-	  Just s -> error $ "unknown sequence format " ++ s
+	  Just s -> usageError argv $ "unknown sequence format " ++ s
 	  Nothing -> FormatDefault
   let end = lexToken format $ getRequiredArg argv ArgEnd
-  let start = 
+  let (cf, start) = 
         case getArg argv ArgStart of 
           Just s -> 
-            lexToken format s
+            ((<=), lexToken format s)
           Nothing ->
             case end of
-              TokenDouble _ -> TokenDouble 0
-              TokenInt _ -> TokenInt 0
-              TokenAlpha xc _ -> TokenAlpha xc 'a'
-              TokenRoman xc _ -> TokenRoman xc 1
+              TokenDouble _ -> ((<), TokenDouble 0)
+              TokenInt _ -> ((<), TokenInt 0)
+              _ -> usageError argv "start value required for this type"
   let (start', end') = promote (start, end)
-  outformat $ map show $ takeWhile (<= end') $ iterate increase start'
+  outformat $ map show $ takeWhile (`cf` end') $ iterate increase start'
   return ()

@@ -16,8 +16,8 @@ Things to add:
     (at least)
   * Alternate bases for integers
   * Proper defaulting of roman numeral arguments
-  * 1, 2 and 3-argument sequences, with zero-based and one-based
-    1-argument versions
+  * An optional step argument
+  * A manual page
 
 This work is available under the "MIT License". Please see
 the file `COPYING` in this distribution for license terms.
