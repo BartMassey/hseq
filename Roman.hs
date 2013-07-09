@@ -3,10 +3,13 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-module Roman (Roman(..), toRoman, fromRoman)
+module Roman (Roman(..), toRoman, fromRoman, romanChars)
 where
        
 import qualified Text.Numeral.Roman as R (toRoman, fromRoman)
+
+romanChars :: [Char]
+romanChars = "IVXLCDM"
 
 newtype Roman = Roman Int
 
@@ -26,4 +29,3 @@ fromRoman s =
   case R.fromRoman s of
     Nothing -> error $ "illegal roman numeral " ++ s
     Just x -> x
-

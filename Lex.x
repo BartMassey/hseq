@@ -44,13 +44,21 @@ lexInt (FormatArabic, s) = TokenInt $ negateableRead s
 lexInt (_, s) = error $ "bad format for " ++ s
 
 lexAlphaUpper :: (Format, String) -> Token
-lexAlphaUpper (FormatDefault, s) = lexAlphaUpper (FormatAlpha, s)
+lexAlphaUpper (FormatDefault, s)
+  | Prelude.length s > 1 && all (`elem` romanChars) s =
+      lexAlphaUpper (FormatRoman, s)
+  | otherwise =
+      lexAlphaUpper (FormatAlpha, s)
 lexAlphaUpper (FormatAlpha, [c]) = TokenAlpha CaseUpper c
 lexAlphaUpper (FormatRoman, s) = TokenRoman CaseUpper $ fromRoman s
 lexAlphaUpper (_, s) = error $ "malformed character format for " ++ s
 
 lexAlphaLower :: (Format, String) -> Token
-lexAlphaLower (FormatDefault, s) = lexAlphaLower (FormatAlpha, s)
+lexAlphaLower (FormatDefault, s)
+  | Prelude.length s > 1 && all ((`elem` romanChars) . toUpper) s =
+      lexAlphaLower (FormatRoman, s)
+  | otherwise =
+      lexAlphaLower (FormatAlpha, s)
 lexAlphaLower (FormatAlpha, [c]) = TokenAlpha CaseLower c
 lexAlphaLower (FormatRoman, s) = TokenRoman CaseLower $
                                    fromRoman (map toUpper s)
