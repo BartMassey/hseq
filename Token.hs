@@ -3,15 +3,14 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-module Token (Case(..), Token(..), Format(..), Incrementable(..), 
-              promote, promote3)
+module Token (Case(..), Token(..), Format(..), Incrementable(..), promote3)
 where
 
 import Roman (Roman(..))
 
 import Data.Char (chr, ord, toUpper, toLower)
 
-data Case = CaseUpper | CaseLower deriving (Eq, Ord)
+data Case = CaseUpper | CaseLower deriving (Eq, Ord, Show)
 
 data Token =
   TokenDouble Double |
@@ -35,16 +34,26 @@ instance Show Token where
   show (TokenRoman CaseUpper t) = show (Roman t)
   show (TokenRoman CaseLower t) = map toLower $ show (Roman t)
 
+
+
+showType :: Token -> String
+showType (TokenInt _) = "TokenInt"
+showType (TokenAlpha xc _) = "TokenAlpha/" ++ show xc
+showType (TokenDouble _) = "TokenDouble"
+showType (TokenRoman xc _) = "TokenRoman/" ++ show xc
+
 class Incrementable a where
-  increase :: a -> a
+  increase :: a -> a -> a
 
 instance Incrementable Token where
-  increase (TokenDouble d) = TokenDouble (d + 1.0)  
-  increase (TokenInt i) = TokenInt (i + 1)
-  increase (TokenAlpha xc c) = TokenAlpha xc (chr (ord c + 1))
-  increase (TokenRoman xc i) = TokenRoman xc (i + 1)
+  increase (TokenDouble inc) (TokenDouble d) = TokenDouble (d + inc)
+  increase (TokenInt inc) (TokenInt i) = TokenInt (i + inc)
+  increase _ (TokenAlpha xc c) = TokenAlpha xc (chr (ord c + 1))
+  increase (TokenRoman _ inc) (TokenRoman xc i) = TokenRoman xc (i + inc)
+  increase inc base = error $ "internal error: bad promotion yields illegal increase: " ++ showType inc ++ " " ++ showType base
 
 promoteL :: [Token] -> [Token]
+promoteL [] = error "internal error: promoted empty list"
 promoteL ts
   | all (\x -> case x of TokenAlpha CaseUpper _ -> True; _ -> False) ts = ts
   | all (\x -> case x of TokenAlpha CaseLower _ -> True; _ -> False) ts = ts
@@ -53,21 +62,18 @@ promoteL ts
   | all (\x -> case x of TokenInt _ -> True; _ -> False) ts = ts
   | all (\x -> case x of TokenDouble _ -> True; _ -> False) ts = ts
   | otherwise =
-      case promote1 ts of
+      case foldr promoteIntToDouble (Just []) ts of
         Just ts' -> ts'
 	Nothing -> error "terms must be of compatible type"
   where
-    promote1 [] =
-      Just []
-    promote1 (TokenInt t : ps) =
-      fmap (TokenDouble (fromIntegral t) :) (promote1 ps)
-    promote1 (TokenDouble t : ps) =
-      fmap (TokenDouble t :) (promote1 ps)
-    promote1 _ = Nothing
-
-promote :: (Token, Token) -> (Token, Token)
-promote (t1, t2) =
-  let [t1', t2'] = promoteL [t1, t2] in (t1', t2')
+    promoteIntToDouble t es =
+      let d = 
+            case t of
+              TokenDouble d' -> Just d'
+              TokenInt i -> Just (fromIntegral i)
+              _ -> Nothing
+      in
+         (\v -> return . (TokenDouble v :) =<< es) =<< d
 
 promote3 :: (Token, Token, Token) -> (Token, Token, Token)
 promote3 (t1, t2, t3) =

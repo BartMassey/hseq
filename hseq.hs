@@ -13,7 +13,8 @@ import Lex
 
 data ArgIndex =
   ArgWords | ArgLines | ArgSep | ArgFormat | 
-  ArgStart | ArgEnd | ArgWiden | ArgPad | ArgSpacePad
+  ArgStart | ArgEnd  | ArgIncr | 
+  ArgWiden | ArgPad | ArgSpacePad
   deriving (Ord, Eq, Show, Enum)
 
 argd :: [Arg ArgIndex]
@@ -66,6 +67,12 @@ argd = [
      argName = Nothing,
      argData = argDataOptional "start" ArgtypeString,
      argDesc = "first element of sequence" },
+  Arg {
+     argIndex = ArgIncr,
+     argAbbr = Nothing,
+     argName = Nothing,
+     argData = argDataOptional "incr" ArgtypeString,
+     argDesc = "sequence increment" },
   Arg {
      argIndex = ArgEnd,
      argAbbr = Nothing,
@@ -135,17 +142,22 @@ main = do
               padOne e = replicate (maxw - length e) c ++ e
   -- Handle sequence specifiers
   let end = lexToken format $ getRequiredArg argv ArgEnd
-  let (cf, start) = 
-        case getArg argv ArgStart of 
-          Just s -> 
-            ((<=), lexToken format s)
-          Nothing ->
-            case end of
-              TokenDouble _ -> ((<), TokenDouble 0)
-              TokenInt _ -> ((<), TokenInt 0)
-              _ -> usageError argv "start value required for this type"
-  let (start', end') = promote (start, end)
+  let (cf, start, incr) =
+        let incr' = 
+              case getArg argv ArgIncr of
+                Nothing -> TokenInt 1
+                Just s -> lexToken format s
+        in
+         case getArg argv ArgStart of 
+           Just s -> 
+             ((<=), lexToken format s, incr')
+           Nothing ->
+             case end of
+               TokenDouble _ -> ((<), TokenDouble 0, incr')
+               TokenInt _ -> ((<), TokenInt 0, incr')
+               _ -> usageError argv "start value required for this type"
+  let (start', end', incr') = promote3 (start, end, incr)
   -- Do it
   outformat $ outpad $ map show $ 
-    takeWhile (`cf` end') $ iterate increase start'
+    takeWhile (`cf` end') $ iterate (increase incr') start'
   return ()
