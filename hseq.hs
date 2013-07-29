@@ -12,20 +12,21 @@ import Token
 import Lex
 
 data ArgIndex =
-  ArgWords | ArgLines | ArgSep | ArgFormat | ArgStart | ArgEnd
+  ArgWords | ArgLines | ArgSep | ArgFormat | 
+  ArgStart | ArgEnd | ArgWiden | ArgPad | ArgSpacePad
   deriving (Ord, Eq, Show, Enum)
 
 argd :: [Arg ArgIndex]
 argd = [
   Arg {
      argIndex = ArgWords,
-     argAbbr = Just 'w',
+     argAbbr = Just 'W',
      argName = Just "words",
      argData = Nothing,
      argDesc = "output a wide sequence of words" },
   Arg {
      argIndex = ArgLines,
-     argAbbr = Just 'l',
+     argAbbr = Just 'L',
      argName = Just "lines",
      argData = Nothing,
      argDesc = "output a long sequence of lines" },
@@ -42,6 +43,24 @@ argd = [
      argData = argDataOptional "format" ArgtypeString,
      argDesc = "sequence element format" },
   Arg {
+     argIndex = ArgWiden,
+     argAbbr = Just 'w',
+     argName = Just "widen",
+     argData = Nothing,
+     argDesc = "widen sequence elements to equal width by zero-padding" },
+  Arg {
+     argIndex = ArgSpacePad,
+     argAbbr = Just 'P',
+     argName = Just "pad-spaces",
+     argData = Nothing,
+     argDesc = "widen sequence elements to equal width by space-padding" },
+  Arg {
+     argIndex = ArgPad,
+     argAbbr = Just 'p',
+     argName = Just "pad",
+     argData = argDataOptional "char" ArgtypeString,
+     argDesc = "widen sequence elements to equal width by padding with char" },
+  Arg {
      argIndex = ArgStart,
      argAbbr = Nothing,
      argName = Nothing,
@@ -56,18 +75,20 @@ argd = [
 
 data OutStyle = OutStyleWords | OutStyleLines | OutStyleSep String
 
+boolc :: Bool -> Int
+boolc True = 1
+boolc False = 0
+
 main :: IO ()
 main = do
   argv <- parseArgsIO ArgsComplete argd
+  -- Handle separators
   let sepcount = 
         boolc (gotArg argv ArgWords) +
         boolc (gotArg argv ArgLines) +
         boolc (gotArg argv ArgSep)
-        where
-          boolc True = 1
-          boolc False = 0
   when (sepcount > 1)
-    (usageError argv "specified multiple output separator styles")
+    (usageError argv "cannot specify multiple output separator styles")
   let outstyle
         | gotArg argv ArgWords = OutStyleWords
         | gotArg argv ArgLines = OutStyleLines
@@ -78,6 +99,7 @@ main = do
           OutStyleWords -> putStrLn . unwords
           OutStyleLines -> putStr . unlines
           OutStyleSep s -> putStrLn . intercalate s
+  -- Handle output format
   let format =
         case fmap (map toLower) $ getArg argv ArgFormat of
 	  Just "roman" -> FormatRoman
@@ -86,6 +108,32 @@ main = do
 	  Just "double" -> FormatDouble
 	  Just s -> usageError argv $ "unknown sequence format " ++ s
 	  Nothing -> FormatDefault
+  -- Handle output padding
+  let padcount =
+        boolc (gotArg argv ArgWiden) +
+        boolc (gotArg argv ArgPad) +
+        boolc (gotArg argv ArgSpacePad)
+  when (padcount > 1)
+    (usageError argv "cannot specify multiple padding styles")
+  let outpad
+        | gotArg argv ArgWiden =
+            case format of
+              FormatRoman -> padWith ' '
+              _ -> padWith '0'
+        | gotArg argv ArgSpacePad = padWith ' '
+        | gotArg argv ArgPad =
+            case getRequiredArg argv ArgPad of
+              [c] -> padWith c
+              _ -> usageError argv "pad must be single character"
+        | otherwise = id
+        where
+          padWith _ [] = []
+          padWith c es =
+            map padOne es
+            where
+              maxw = maximum $ map length es
+              padOne e = replicate (maxw - length e) c ++ e
+  -- Handle sequence specifiers
   let end = lexToken format $ getRequiredArg argv ArgEnd
   let (cf, start) = 
         case getArg argv ArgStart of 
@@ -97,5 +145,7 @@ main = do
               TokenInt _ -> ((<), TokenInt 0)
               _ -> usageError argv "start value required for this type"
   let (start', end') = promote (start, end)
-  outformat $ map show $ takeWhile (`cf` end') $ iterate increase start'
+  -- Do it
+  outformat $ outpad $ map show $ 
+    takeWhile (`cf` end') $ iterate increase start'
   return ()
