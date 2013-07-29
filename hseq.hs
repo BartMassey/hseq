@@ -5,13 +5,14 @@
 
 import Control.Monad (when)
 import Data.Char (toLower)
+import Data.List (intercalate)
 import System.Console.ParseArgs
 
 import Token
 import Lex
 
 data ArgIndex =
-  ArgWords | ArgLines | ArgFormat | ArgStart | ArgEnd
+  ArgWords | ArgLines | ArgSep | ArgFormat | ArgStart | ArgEnd
   deriving (Ord, Eq, Show, Enum)
 
 argd :: [Arg ArgIndex]
@@ -28,6 +29,12 @@ argd = [
      argName = Just "lines",
      argData = Nothing,
      argDesc = "output a long sequence of lines" },
+  Arg {
+     argIndex = ArgSep,
+     argAbbr = Just 's',
+     argName = Just "separator",
+     argData = argDataOptional "string" ArgtypeString, 
+     argDesc = "put a specific separator between sequence elements"},
   Arg {
      argIndex = ArgFormat,
      argAbbr = Just 'f',
@@ -47,21 +54,30 @@ argd = [
      argData = argDataRequired "end" ArgtypeString,
      argDesc = "last element of sequence" } ]
 
-data OutStyle = OutStyleWords | OutStyleLines
+data OutStyle = OutStyleWords | OutStyleLines | OutStyleSep String
 
 main :: IO ()
 main = do
   argv <- parseArgsIO ArgsComplete argd
-  when (gotArg argv ArgWords && gotArg argv ArgLines)
-    (usageError argv "specified both words and lines as output style")
+  let sepcount = 
+        boolc (gotArg argv ArgWords) +
+        boolc (gotArg argv ArgLines) +
+        boolc (gotArg argv ArgSep)
+        where
+          boolc True = 1
+          boolc False = 0
+  when (sepcount > 1)
+    (usageError argv "specified multiple output separator styles")
   let outstyle
         | gotArg argv ArgWords = OutStyleWords
         | gotArg argv ArgLines = OutStyleLines
+        | gotArg argv ArgSep = OutStyleSep $ getRequiredArg argv ArgSep
         | otherwise = OutStyleLines
   let outformat =
         case outstyle of
           OutStyleWords -> putStrLn . unwords
           OutStyleLines -> putStr . unlines
+          OutStyleSep s -> putStrLn . intercalate s
   let format =
         case fmap (map toLower) $ getArg argv ArgFormat of
 	  Just "roman" -> FormatRoman
