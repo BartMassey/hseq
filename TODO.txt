@@ -1,0 +1,6 @@
+* Do the clever count thing on zero increment
+* Allow mixing integer increments with roman and alpha
+  limits.
+* Allow mixing integer and roman limits.
+* Add seq-style -f format-string
+* Add support for alternate integer bases
