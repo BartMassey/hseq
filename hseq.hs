@@ -88,7 +88,7 @@ boolc False = 0
 
 main :: IO ()
 main = do
-  argv <- parseArgsIO ArgsComplete argd
+  argv <- parseArgsIO (ArgsParseControl ArgsComplete ArgsSoftDash) argd
   -- Handle separators
   let sepcount = 
         boolc (gotArg argv ArgWords) +
