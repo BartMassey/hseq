@@ -3,7 +3,8 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-module Token (Case(..), Token(..), Format(..), Incrementable(..), promote3)
+module Token (Case(..), Token(..), Format(..), IncrSign(..),
+              Incrementable(..), promote3)
 where
 
 import Roman (Roman(..))
@@ -42,15 +43,34 @@ showType (TokenAlpha xc _) = "TokenAlpha/" ++ show xc
 showType (TokenDouble _) = "TokenDouble"
 showType (TokenRoman xc _) = "TokenRoman/" ++ show xc
 
+data IncrSign = IncrPos | IncrZero | IncrNeg
+
 class Incrementable a where
   increase :: a -> a -> a
+  incrSign :: a -> IncrSign
 
 instance Incrementable Token where
   increase (TokenDouble inc) (TokenDouble d) = TokenDouble (d + inc)
   increase (TokenInt inc) (TokenInt i) = TokenInt (i + inc)
   increase _ (TokenAlpha xc c) = TokenAlpha xc (chr (ord c + 1))
   increase (TokenRoman _ inc) (TokenRoman xc i) = TokenRoman xc (i + inc)
-  increase inc base = error $ "internal error: bad promotion yields illegal increase: " ++ showType inc ++ " " ++ showType base
+  increase inc base = error $ "internal error: bad promotion " ++
+                        "yields illegal increase: " ++ 
+                        showType inc ++ " " ++ showType base
+  incrSign (TokenDouble v)
+    | v > 0 = IncrPos
+    | v < 0 = IncrNeg
+    | otherwise = IncrZero
+  incrSign (TokenInt v)
+    | v > 0 = IncrPos
+    | v < 0 = IncrNeg
+    | otherwise = IncrZero
+  incrSign (TokenRoman _ v)
+    | v > 0 = IncrPos
+    | v < 0 = IncrNeg
+    | otherwise = IncrZero
+  incrSign (TokenAlpha _ _) =
+    IncrZero
 
 promoteL :: [Token] -> [Token]
 promoteL [] = error "internal error: promoted empty list"

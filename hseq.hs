@@ -142,7 +142,7 @@ main = do
               padOne e = replicate (maxw - length e) c ++ e
   -- Handle sequence specifiers
   let end = lexToken format $ getRequiredArg argv ArgEnd
-  let (cf, start, incr) =
+  let (cfeq, start, incr) =
         let incr' = 
               case getArg argv ArgIncr of
                 Nothing -> TokenInt 1
@@ -150,12 +150,24 @@ main = do
         in
          case getArg argv ArgStart of 
            Just s -> 
-             ((<=), lexToken format s, incr')
+             (True, lexToken format s, incr')
            Nothing ->
              case end of
-               TokenDouble _ -> ((<), TokenDouble 0, incr')
-               TokenInt _ -> ((<), TokenInt 0, incr')
+               TokenDouble _ -> (False, TokenDouble 0, incr')
+               TokenInt _ -> (False, TokenInt 0, incr')
                _ -> usageError argv "start value required for this type"
+  let cf =
+        case incrSign incr of
+          IncrZero ->
+            usageError argv "increment should never be zero"
+          IncrPos ->
+            case cfeq of
+              True -> (<=)
+              False -> (<)
+          IncrNeg ->
+            case cfeq of
+              True -> (>=)
+              False -> (>)
   let (start', end', incr') = promote3 (start, end, incr)
   -- Do it
   outformat $ outpad $ map show $ 
