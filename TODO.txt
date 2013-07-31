@@ -1,4 +1,5 @@
-* Add seq-style -f format-string
+* Add seq-style -f format-string.
+* Fix single-argument invocation for compatibility with seq.
 * Allow mixing integer increments with roman and alpha
   limits. Allow mixing integer and roman limits.
 * Add support for alternate integer bases
