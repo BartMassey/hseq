@@ -25,7 +25,8 @@ data Format =
   FormatRoman |
   FormatAlpha |
   FormatArabic |
-  FormatDouble
+  FormatDouble |
+  FormatByString String
 
 instance Show Token where
   show (TokenDouble t) = show t

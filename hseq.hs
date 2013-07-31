@@ -12,7 +12,8 @@ import Token
 import Lex
 
 data ArgIndex =
-  ArgWords | ArgLines | ArgSep | ArgFormat | 
+  ArgWords | ArgLines | ArgSep | 
+  ArgFormat | ArgFormatString |
   ArgStart | ArgEnd  | ArgIncr | 
   ArgWiden | ArgPad | ArgSpacePad
   deriving (Ord, Eq, Show, Enum)
@@ -39,10 +40,16 @@ argd = [
      argDesc = "put a specific separator between sequence elements"},
   Arg {
      argIndex = ArgFormat,
+     argAbbr = Just 'F',
+     argName = Just "format-word",
+     argData = argDataOptional "format" ArgtypeString,
+     argDesc = "sequence element format as a word" },
+  Arg {
+     argIndex = ArgFormatString,
      argAbbr = Just 'f',
      argName = Just "format",
      argData = argDataOptional "format" ArgtypeString,
-     argDesc = "sequence element format" },
+     argDesc = "sequence element format string" },
   Arg {
      argIndex = ArgWiden,
      argAbbr = Just 'w',
@@ -100,14 +107,19 @@ main = do
         | otherwise =
             putStr . unlines
   -- Handle output format
+  dupArgs argv [ArgFormat, ArgFormatString]
+    "cannot specify multiple format styles"
   let format =
-        case fmap (map toLower) $ getArg argv ArgFormat of
-	  Just "roman" -> FormatRoman
-	  Just "alpha" -> FormatAlpha
-	  Just "arabic" -> FormatArabic
-	  Just "double" -> FormatDouble
-	  Just s -> usageError argv $ "unknown sequence format " ++ s
-	  Nothing -> FormatDefault
+        case getArg argv ArgFormatString of
+          Just s -> FormatByString s
+          Nothing ->
+            case fmap (map toLower) $ getArg argv ArgFormat of
+              Just "roman" -> FormatRoman
+              Just "alpha" -> FormatAlpha
+              Just "arabic" -> FormatArabic
+              Just "double" -> FormatDouble
+              Just s -> usageError argv $ "unknown sequence format " ++ s
+              Nothing -> FormatDefault
   -- Handle output padding
   dupArgs argv [ArgWiden, ArgPad, ArgSpacePad]
     "cannot specify multiple padding styles"
