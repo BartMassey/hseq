@@ -80,8 +80,6 @@ argd = [
      argData = argDataRequired "end" ArgtypeString,
      argDesc = "last element of sequence" } ]
 
-data OutStyle = OutStyleWords | OutStyleLines | OutStyleSep String
-
 boolc :: Bool -> Int
 boolc True = 1
 boolc False = 0
@@ -96,16 +94,13 @@ main = do
         boolc (gotArg argv ArgSep)
   when (sepcount > 1)
     (usageError argv "cannot specify multiple output separator styles")
-  let outstyle
-        | gotArg argv ArgWords = OutStyleWords
-        | gotArg argv ArgLines = OutStyleLines
-        | gotArg argv ArgSep = OutStyleSep $ getRequiredArg argv ArgSep
-        | otherwise = OutStyleLines
-  let outformat =
-        case outstyle of
-          OutStyleWords -> putStrLn . unwords
-          OutStyleLines -> putStr . unlines
-          OutStyleSep s -> putStrLn . intercalate s
+  let outformat
+        | gotArg argv ArgWords =
+            putStrLn . unwords
+        | gotArg argv ArgSep =
+            putStrLn . intercalate (getRequiredArg argv ArgSep)
+        | otherwise =
+            putStr . unlines
   -- Handle output format
   let format =
         case fmap (map toLower) $ getArg argv ArgFormat of
