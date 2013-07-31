@@ -80,20 +80,18 @@ argd = [
      argData = argDataRequired "end" ArgtypeString,
      argDesc = "last element of sequence" } ]
 
-boolc :: Bool -> Int
-boolc True = 1
-boolc False = 0
+dupArgs :: Args ArgIndex -> [ArgIndex] -> String -> IO ()
+dupArgs argv args msg =
+  if length (filter (gotArg argv) args) > 1
+  then usageError argv msg
+  else return ()
 
 main :: IO ()
 main = do
   argv <- parseArgsIO (ArgsParseControl ArgsComplete ArgsSoftDash) argd
   -- Handle separators
-  let sepcount = 
-        boolc (gotArg argv ArgWords) +
-        boolc (gotArg argv ArgLines) +
-        boolc (gotArg argv ArgSep)
-  when (sepcount > 1)
-    (usageError argv "cannot specify multiple output separator styles")
+  dupArgs argv [ArgWords, ArgLines, ArgSep]
+    "cannot specify multiple output separator styles"
   let outformat
         | gotArg argv ArgWords =
             putStrLn . unwords
@@ -111,12 +109,8 @@ main = do
 	  Just s -> usageError argv $ "unknown sequence format " ++ s
 	  Nothing -> FormatDefault
   -- Handle output padding
-  let padcount =
-        boolc (gotArg argv ArgWiden) +
-        boolc (gotArg argv ArgPad) +
-        boolc (gotArg argv ArgSpacePad)
-  when (padcount > 1)
-    (usageError argv "cannot specify multiple padding styles")
+  dupArgs argv [ArgWiden, ArgPad, ArgSpacePad]
+    "cannot specify multiple padding styles"
   let outpad
         | gotArg argv ArgWiden =
             case format of
