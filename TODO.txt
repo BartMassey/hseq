@@ -1,6 +1,7 @@
-* Do the clever count thing on zero increment
-* Allow mixing integer increments with roman and alpha
-  limits.
-* Allow mixing integer and roman limits.
 * Add seq-style -f format-string
+* Allow mixing integer increments with roman and alpha
+  limits. Allow mixing integer and roman limits.
 * Add support for alternate integer bases
+* Do the count thing on zero increment
+* Add support for OEIS (http://oeis.org)
+  [Thanks to Max Goodman for this suggestion.]
