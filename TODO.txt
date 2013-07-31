@@ -3,5 +3,11 @@
   limits. Allow mixing integer and roman limits.
 * Add support for alternate integer bases
 * Do the count thing on zero increment
-* Add support for OEIS (http://oeis.org)
-  [Thanks to Max Goodman for this suggestion.]
+* Add support for OEIS (http://oeis.org).
+  Thanks to Max Goodman for this suggestion.
+  Search a URL of the form
+   http://oeis.org/search?fmt=text&q=2,5,14,50,233
+  followed by
+   oeis.org/search?q=id:A000109&fmt=text
+  as suggested by
+   http://stackoverflow.com/questions/5991756/
