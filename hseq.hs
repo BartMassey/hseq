@@ -15,7 +15,8 @@ data ArgIndex =
   ArgWords | ArgLines | ArgSep | 
   ArgFormat | ArgFormatString |
   ArgStart | ArgEnd  | ArgIncr | 
-  ArgWiden | ArgPad | ArgSpacePad
+  ArgWiden | ArgPad | ArgSpacePad | 
+  ArgNumber
   deriving (Ord, Eq, Show, Enum)
 
 argd :: [Arg ArgIndex]
@@ -32,6 +33,12 @@ argd = [
      argName = Just "lines",
      argData = Nothing,
      argDesc = "output a long sequence of lines" },
+  Arg {
+     argIndex = ArgNumber,
+     argAbbr = Just 'n',
+     argName = Just "number-lines",
+     argData = Nothing,
+     argDesc = "instead of outputting a sequence, number lines as a filter" },
   Arg {
      argIndex = ArgSep,
      argAbbr = Just 's',
@@ -93,12 +100,19 @@ dupArgs argv args msg =
   then usageError argv msg
   else return ()
 
+numberLines :: [String] -> IO ()
+numberLines lineNumbers = do
+  contents <- getContents
+  putStr $ unlines $ zipWith joinNum lineNumbers $ lines contents
+  where
+    joinNum num line = num ++ " " ++ line
+
 main :: IO ()
 main = do
   argv <- parseArgsIO (ArgsParseControl ArgsComplete ArgsSoftDash) argd
   -- Handle separators
-  dupArgs argv [ArgWords, ArgLines, ArgSep]
-    "cannot specify multiple output separator styles"
+  dupArgs argv [ArgWords, ArgLines, ArgSep, ArgNumber]
+    "cannot specify multiple output styles"
   let outformat
         | gotArg argv ArgWords =
             putStrLn . unwords
@@ -154,8 +168,8 @@ main = do
              (True, lexToken format s, incr')
            Nothing ->
              case end of
-               TokenDouble _ -> (False, TokenDouble 0, incr')
-               TokenInt _ -> (False, TokenInt 0, incr')
+               TokenDouble _ -> (False, TokenDouble 1, incr')
+               TokenInt _ -> (False, TokenInt 1, incr')
                _ -> usageError argv "start value required for this type"
   let cf =
         case incrSign incr of
@@ -170,7 +184,11 @@ main = do
               True -> (>=)
               False -> (>)
   let (start', end', incr') = promote3 (start, end, incr)
+  let sequenceStr = 
+        outpad $ map show $ takeWhile (`cf` end') $ 
+          iterate (increase incr') start'
   -- Do it
-  outformat $ outpad $ map show $ 
-    takeWhile (`cf` end') $ iterate (increase incr') start'
+  if gotArg argv ArgNumber
+    then numberLines sequenceStr
+    else outformat sequenceStr
   return ()
