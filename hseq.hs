@@ -91,7 +91,7 @@ argd = [
      argIndex = ArgEnd,
      argAbbr = Nothing,
      argName = Nothing,
-     argData = argDataRequired "end" ArgtypeString,
+     argData = argDataOptional "end" ArgtypeString,
      argDesc = "last element of sequence" } ]
 
 dupArgs :: Args ArgIndex -> [ArgIndex] -> String -> IO ()
@@ -100,12 +100,18 @@ dupArgs argv args msg =
   then usageError argv msg
   else return ()
 
-numberLines :: [String] -> IO ()
-numberLines lineNumbers = do
+numberLines :: ([String] -> [String]) -> [String] -> IO ()
+numberLines outpad lineNumbers = do
   contents <- getContents
-  putStr $ unlines $ zipWith joinNum lineNumbers $ lines contents
+  putStr $ unlines $ map joinNum $
+    padNumbers $ zip lineNumbers $ lines contents
   where
-    joinNum num line = num ++ " " ++ line
+    padNumbers lns =
+      let nums = outpad $ map fst lns
+          lines = map snd lns
+      in
+       zip nums lines
+    joinNum (num, line) = num ++ " " ++ line
 
 main :: IO ()
 main = do
@@ -156,39 +162,83 @@ main = do
               maxw = maximum $ map length es
               padOne e = replicate (maxw - length e) c ++ e
   -- Handle sequence specifiers
-  let end = lexToken format $ getRequiredArg argv ArgEnd
-  let (cfeq, start, incr) =
-        let incr' = 
-              case getArg argv ArgIncr of
-                Nothing -> TokenInt 1
-                Just s -> lexToken format s
-        in
-         case getArg argv ArgStart of 
-           Just s -> 
-             (True, lexToken format s, incr')
-           Nothing ->
-             case end of
-               TokenDouble _ -> (False, TokenDouble 1, incr')
-               TokenInt _ -> (False, TokenInt 1, incr')
-               _ -> usageError argv "start value required for this type"
-  let cf =
-        case incrSign incr of
-          IncrZero ->
-            usageError argv "increment should never be zero"
-          IncrPos ->
-            case cfeq of
-              True -> (<=)
-              False -> (<)
-          IncrNeg ->
-            case cfeq of
-              True -> (>=)
-              False -> (>)
+  let (cf, end, start, incr) =
+        case gotArg argv ArgNumber of
+          True ->
+            let end' =
+                  if gotArg argv ArgEnd 
+                  then usageError argv "cannot give ending line number"
+                  else TokenInt (-1)
+                (start', incr') =
+                  let incr'' = 
+                        case getArg argv ArgIncr of
+                          Nothing -> TokenInt 1
+                          Just s -> lexToken format s
+                  in
+                   case getArg argv ArgStart of 
+                     Just s -> 
+                       (lexToken format s, incr'')
+                     Nothing ->
+                       case end of
+                         TokenDouble _ -> (TokenDouble 1, incr'')
+                         TokenInt _ -> (TokenInt 1, incr'')
+                         _ -> usageError argv
+                                "start value required for this type"
+            in
+             ((\_ _ -> True), end', start', incr')
+          False ->
+            let (startArg, incrArg, endArg) =
+                  let arg1 = getArg argv ArgStart
+                      arg2 = getArg argv ArgIncr
+                      arg3 = getArg argv ArgEnd
+                  in
+                   case (arg1, arg2, arg3) of
+                     (Nothing, Nothing, Nothing) ->
+                       usageError argv "ending value required"
+                     (Just a1, Nothing, Nothing) ->
+                       (Nothing, Nothing, a1)
+                     (Just _, Just a2, Nothing) ->
+                       (arg1, Nothing, a2)
+                     (Just _, Just _, Just a3) ->
+                       (arg1, arg2, a3)
+                     _ ->
+                       error "internal error: bad parse of limit arguments"
+                end' = lexToken format endArg
+                (cfeq, start', incr') =
+                  let incr'' = 
+                        case incrArg of
+                          Nothing -> TokenInt 1
+                          Just s -> lexToken format s
+                  in
+                   case startArg of 
+                     Just s -> 
+                       (True, lexToken format s, incr'')
+                     Nothing ->
+                       case end' of
+                         TokenDouble _ -> (False, TokenDouble 1, incr'')
+                         TokenInt _ -> (False, TokenInt 1, incr'')
+                         _ -> usageError argv 
+                                "start value required for this type"
+                cf' =
+                  case incrSign incr' of
+                    IncrZero ->
+                      usageError argv "increment should never be zero"
+                    IncrPos ->
+                      case cfeq of
+                        True -> (<=)
+                        False -> (<)
+                    IncrNeg ->
+                      case cfeq of
+                        True -> (>=)
+                        False -> (>)
+            in
+             (cf', end', start', incr')
   let (start', end', incr') = promote3 (start, end, incr)
   let sequenceStr = 
-        outpad $ map show $ takeWhile (`cf` end') $ 
+        map show $ takeWhile (`cf` end') $ 
           iterate (increase incr') start'
   -- Do it
   if gotArg argv ArgNumber
-    then numberLines sequenceStr
-    else outformat sequenceStr
+    then numberLines outpad sequenceStr
+    else outformat $ outpad sequenceStr
   return ()
