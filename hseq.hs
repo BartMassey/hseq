@@ -38,13 +38,13 @@ argd = [
      argAbbr = Just 'n',
      argName = Just "number-lines",
      argData = Nothing,
-     argDesc = "instead of outputting a sequence, number lines as a filter" },
+     argDesc = "number lines as a filter" },
   Arg {
      argIndex = ArgSep,
      argAbbr = Just 's',
      argName = Just "separator",
      argData = argDataOptional "string" ArgtypeString, 
-     argDesc = "put a specific separator between sequence elements"},
+     argDesc = "put separator between sequence elements"},
   Arg {
      argIndex = ArgFormat,
      argAbbr = Just 'F',
@@ -62,19 +62,19 @@ argd = [
      argAbbr = Just 'w',
      argName = Just "widen",
      argData = Nothing,
-     argDesc = "widen sequence elements to equal width by zero-padding" },
+     argDesc = "widen elements by zero-padding" },
   Arg {
      argIndex = ArgSpacePad,
      argAbbr = Just 'P',
      argName = Just "pad-spaces",
      argData = Nothing,
-     argDesc = "widen sequence elements to equal width by space-padding" },
+     argDesc = "widen elements by space-padding" },
   Arg {
      argIndex = ArgPad,
      argAbbr = Just 'p',
      argName = Just "pad",
      argData = argDataOptional "char" ArgtypeString,
-     argDesc = "widen sequence elements to equal width by padding with char" },
+     argDesc = "widen elements by padding with char" },
   Arg {
      argIndex = ArgStart,
      argAbbr = Nothing,
