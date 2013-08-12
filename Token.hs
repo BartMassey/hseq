@@ -53,7 +53,8 @@ class Incrementable a where
 instance Incrementable Token where
   increase (TokenDouble inc) (TokenDouble d) = TokenDouble (d + inc)
   increase (TokenInt inc) (TokenInt i) = TokenInt (i + inc)
-  increase _ (TokenAlpha xc c) = TokenAlpha xc (chr (ord c + 1))
+  increase (TokenInt inc) (TokenAlpha xc c) = TokenAlpha xc (chr (ord c + fromIntegral inc))
+  increase (TokenInt inc) (TokenRoman xc i) = TokenRoman xc (i + fromIntegral inc)
   increase (TokenRoman _ inc) (TokenRoman xc i) = TokenRoman xc (i + inc)
   increase inc base = error $ "internal error: bad promotion " ++
                         "yields illegal increase: " ++ 
@@ -98,4 +99,14 @@ promoteL ts
 
 promote3 :: (Token, Token, Token) -> (Token, Token, Token)
 promote3 (t1, t2, t3) =
-  let [t1', t2', t3'] = promoteL [t1, t2, t3] in (t1', t2', t3')
+  let [t1', t2'] = promoteL [t1, t2]
+      t3' = case (t3, t1') of
+        ((TokenInt inc), (TokenDouble _)) -> TokenDouble $ fromIntegral inc
+        ((TokenDouble _), (TokenDouble _)) -> t3
+        ((TokenInt _), (TokenInt _)) -> t3
+        ((TokenInt _),  (TokenAlpha _ _)) -> t3
+        ((TokenInt _), (TokenRoman _ _)) -> t3
+        ((TokenRoman _ inc), (TokenRoman _ _)) -> TokenInt $ fromIntegral inc
+        _ -> error "illegal increment type"
+  in
+   (t1', t2', t3')
