@@ -12,3 +12,8 @@
    oeis.org/search?q=id:A000109&fmt=text
   as suggested by
    http://stackoverflow.com/questions/5991756/
+  This is really problematic, because long sequences, so
+  will take some thought.
+* Fix compiler warnings.
+* Extend alpha sequences to "z aa ab" etc. "I do not know
+  my 'aa bb cc's." --Mitch Hedberg
