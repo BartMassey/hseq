@@ -16,7 +16,7 @@ data ArgIndex =
   ArgFormat | ArgFormatString |
   ArgStart | ArgEnd  | ArgIncr | 
   ArgWiden | ArgPad | ArgSpacePad | 
-  ArgNumber
+  ArgWidth | ArgNumber
   deriving (Ord, Eq, Show, Enum)
 
 argd :: [Arg ArgIndex]
@@ -75,6 +75,12 @@ argd = [
      argName = Just "pad",
      argData = argDataOptional "char" ArgtypeString,
      argDesc = "widen elements by padding with char" },
+  Arg {
+     argIndex = ArgWidth,
+     argAbbr = Just 'z',
+     argName = Just "zero-width",
+     argData = argDataOptional "width" ArgtypeInt,
+     argDesc = "number of characters to pad elements to" },
   Arg {
      argIndex = ArgStart,
      argAbbr = Nothing,
@@ -143,24 +149,32 @@ main = do
   -- Handle output padding
   dupArgs argv [ArgWiden, ArgPad, ArgSpacePad]
     "cannot specify multiple padding styles"
+  when (gotArg argv ArgWidth &&
+        not (any (gotArg argv) [ArgWiden, ArgPad, ArgSpacePad]))
+      (usageError argv "zero-width specified but no padding")
+  let padEngine =
+          padWith (getArg argv ArgWidth)
+          where
+            padWith _ _ [] = []
+            padWith maybeWidth c es =
+                map padOne es
+                where
+                  maxw = maximum $ map length es
+                  limw = case maybeWidth of
+                           Nothing -> maxw
+                           Just w -> w `max` maxw
+                  padOne e = replicate (limw - length e) c ++ e
   let outpad
         | gotArg argv ArgWiden =
             case format of
-              FormatRoman -> padWith ' '
-              _ -> padWith '0'
-        | gotArg argv ArgSpacePad = padWith ' '
+              FormatRoman -> padEngine ' '
+              _ -> padEngine '0'
+        | gotArg argv ArgSpacePad = padEngine ' '
         | gotArg argv ArgPad =
             case getRequiredArg argv ArgPad of
-              [c] -> padWith c
+              [c] -> padEngine c
               _ -> usageError argv "pad must be single character"
         | otherwise = id
-        where
-          padWith _ [] = []
-          padWith c es =
-            map padOne es
-            where
-              maxw = maximum $ map length es
-              padOne e = replicate (maxw - length e) c ++ e
   -- Handle sequence specifiers
   let (cf, end, start, incr) =
         case gotArg argv ArgNumber of
